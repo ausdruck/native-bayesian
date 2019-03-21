@@ -1,17 +1,22 @@
 <?php
 /**
   * @author maas(maasdruck@gmail.com)
-  * @date 2019/03/20
-  * @version v1.0
+  * @date 2019/03/21
+  * @version v1.01
   * @brief 朴素贝叶斯自动过滤擦边词
   */
 
 # 具体词库涉及到大量国家安全，政治敏感，色情影视，在线赌博，枪支毒品，高官八卦，企业形象，个人隐私等，无法开源，见谅
-
+ 
 ignore_user_abort();
 ini_set('memory_limit', '800M');
 ini_set('max_execution_time', 0);
 set_time_limit(0);
+
+$dict = 'd607330.txt';
+$spam = 'spam.txt';
+$normal = 'normal.txt';
+
 $t = microtime(1);
 if (isset($_GET['s'])) {
     $s = $_GET['s'];
@@ -61,7 +66,7 @@ $p = array (' ', '#', '&', 'https://', 'http://', 'http:/');
 $y = array ('+', '%23', '%26', '', '', '');
 
 if (strlen($s) > 0) {
-    $spam_x = str_replace("\n", '', file('spam-text.txt')); // 垃圾文本
+    $spam_x = str_replace("\n", '', file($spam)); // 垃圾文本
     $s_sx = 0;
     foreach ($spam_x as $k_sx) {
         if ($s == $k_sx) {
@@ -71,13 +76,13 @@ if (strlen($s) > 0) {
         }
     }
     if ($s_sx == 0) {
-        file_put_contents('spam-text.txt', $s."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($spam, $s."\n", FILE_APPEND | LOCK_EX);
         echo $s."\n已添加到垃圾词库\n";
     }
     $q = substr(htmlspecialchars(strtolower(str_replace($p, $y, $s))), 0, 128);
 }
 elseif (strlen($n) > 0) {
-    $normal_x = str_replace("\n", '', file('normal-text.txt')); // 正常文本
+    $normal_x = str_replace("\n", '', file($normal)); // 正常文本
     $n_nx = 0;
     foreach ($normal_x as $k_nx) {
         if ($n == $k_nx) {
@@ -87,13 +92,13 @@ elseif (strlen($n) > 0) {
         }
     }
     if ($n_nx == 0) {
-        file_put_contents('normal-text.txt', $n."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($normal, $n."\n", FILE_APPEND | LOCK_EX);
         echo $n."\n已添加到正常词库\n";
     }
     $q = substr(htmlspecialchars(strtolower(str_replace($p, $y, $n))), 0, 128);
 }
 elseif (strlen($d) > 0) {
-    $dict_x = str_replace("\n", '', file('dict.txt')); // 词典
+    $dict_x = str_replace("\n", '', file($dict)); // 词典
     $d_dx = 0;
     foreach ($dict_x as $k_dx) {
         if ($d == $k_dx) {
@@ -103,42 +108,39 @@ elseif (strlen($d) > 0) {
         }
     }
     if ($d_dx == 0) {
-        file_put_contents('dict.txt', $d."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($dict, $d."\n", FILE_APPEND | LOCK_EX);
         echo $d."\n已添加到词典\n";
     }
 }
 elseif ($f == 1) {
-    $spam_d = str_replace("\n", '', file('spam-text.txt')); // 垃圾文本
+    $spam_d = str_replace("\n", '', file($spam)); // 垃圾文本
     echo '垃圾词库里删除 '.end($spam_d)."\n";
     array_pop($spam_d);
     array_unique($spam_d);
+    unlink($spam);
     foreach ($spam_d as $k_s_d) {
-        file_put_contents('spam-back.txt', $k_s_d."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($spam, $k_s_d."\n", FILE_APPEND | LOCK_EX);
     }
-    unlink('spam-text.txt');
-    rename('spam-back.txt', 'spam-text.txt');
 }
 elseif ($f == 2) {
-    $normal_d = str_replace("\n", '', file('normal-text.txt')); // 正常文本
+    $normal_d = str_replace("\n", '', file($normal)); // 正常文本
     echo '正常词库里删除 '.end($normal_d)."\n";
     array_pop($normal_d);
     array_unique($normal_d);
+    unlink($normal);
     foreach ($normal_d as $k_n_d) {
-        file_put_contents('normal-back.txt', $k_n_d."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($normal, $k_n_d."\n", FILE_APPEND | LOCK_EX);
     }
-    unlink('normal-text.txt');
-    rename('normal-back.txt', 'normal-text.txt');
 }
 elseif ($f == 3) {
-    $dict_d = str_replace("\n", '', file('dict.txt')); // 词典
+    $dict_d = str_replace("\n", '', file($dict)); // 词典
     echo '词典里删除 '.end($dict_d)."\n";
     array_pop($dict_d);
     array_unique($dict_d);
+    unlink($dict);
     foreach ($dict_d as $k_d_d) {
-        file_put_contents('d1.txt', $k_d_d."\n", FILE_APPEND | LOCK_EX);
+        file_put_contents($dict, $k_d_d."\n", FILE_APPEND | LOCK_EX);
     }
-    unlink('dict.txt');
-    rename('dict-back.txt', 'dict.txt');
 }
 
 if (strlen($x) > 0) {
@@ -146,21 +148,21 @@ if (strlen($x) > 0) {
 }
 
 if ($o == 1) {
-    $spam = str_replace("\n", '', file('spam-text.txt')); // 垃圾文本
-    $norm = str_replace("\n", '', file('normal-text.txt')); // 正常文本
-    $dict = str_replace("\n", '', file('dict.txt')); // 词典
-    $isn = number_format(2 / (count(file('normal-text.txt')) + count(file('spam-text.txt'))), 5);
+    $spams = str_replace("\n", '', file($spam)); // 垃圾文本
+    $norm = str_replace("\n", '', file($normal)); // 正常文本
+    $dicts = str_replace("\n", '', file($dict)); // 词典
+    $isn = number_format(2 / (count(file($normal)) + count(file($spam))), 5);
     echo '逆词频 '.$isn;
 
     // 垃圾文本简易分词
-    foreach ($spam as $j => $v) {
-        $spm[$j] = htmlspecialchars(strtolower(str_replace($p, $y, $spam[$j])));
+    foreach ($spams as $j => $v) {
+        $spm[$j] = htmlspecialchars(strtolower(str_replace($p, $y, $spams[$j])));
         // query 中有 2 个连续的点或是一个加号就拆分
         $segs[$j] = array_filter(preg_split('/\.{2,}|\+/', strtolower($spm[$j])));
         // 垃圾文本匹配词典每一个词，匹配则生成数组 因为循环spam次词典，耗时 150秒
-        foreach ($dict as $k => $v) {
-            if (strlen(strpos($spm[$j], $dict[$k])) > 0) {
-                $segc0[$j][$k] = $dict[$k];
+        foreach ($dicts as $k => $v) {
+            if (strlen(strpos($spm[$j], $dicts[$k])) > 0) {
+                $segc0[$j][$k] = $dicts[$k];
             }
         }
         // 如果存在 query 有 2 个连续的点或是一个加号，与词典分词的数组合并成新数组，然后去重
@@ -189,9 +191,9 @@ if ($o == 1) {
     foreach ($norm as $j => $v) {
         $nom[$j] = htmlspecialchars(strtolower(str_replace($p, $y, $norm[$j])));
         $segn[$j] =  array_filter(preg_split('/\.{2,}|\+/', strtolower($nom[$j])));
-        foreach ($dict as $k => $v) {
-            if (strlen(strpos($nom[$j], $dict[$k])) > 0) {
-                $segc1[$j][$k] = $dict[$k];
+        foreach ($dicts as $k => $v) {
+            if (strlen(strpos($nom[$j], $dicts[$k])) > 0) {
+                $segc1[$j][$k] = $dicts[$k];
             }
         }
         if (isset($segn[$j][1])) {
