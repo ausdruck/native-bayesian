@@ -4,7 +4,7 @@
 
 精简10%代码，优化判断逻辑
 
-<img src="//github.com/ausdruck/native-bayesian/raw/master/scatter.jpg">
+<img src="//raw.githubusercontent.com/ausdruck/native-bayesian/master/scatter.jpg">
 图中杂色为各类敏感词，绿圈为朴素贝叶斯方法计算所有关键词概率，屏蔽圈内虽然造成大量误判，但圈外面积遗漏擦边词数量已经可以靠人工复审杜绝所有垃圾词。
 
 ### 2019-03-25
