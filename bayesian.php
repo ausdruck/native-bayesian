@@ -1,8 +1,8 @@
 <?php
 /**
   * @author maas(maasdruck@gmail.com)
-  * @date 2019/03/25
-  * @version v1.02
+  * @date 2019/03/26
+  * @version v1.03
   * @brief 朴素贝叶斯自动过滤擦边词
   */
 
@@ -19,147 +19,29 @@ $spam = $dir.'spam.txt';    # 负面词典
 $norm = $dir.'normal.txt';  # 正面词典
 $freq = $dir.'bayesian';    # 词频序列数组
 
-# 提权 严重负面
-$sp1w = array('');
-# 提权 轻微负面
-$sp2w = array('');
 
-# 提权 较为正面
-$sp4w = array('');
-# 提权 非常正面
-$sp3w = array('');
+$priv0 = array(''); # 提权 严重负面
+$priv1 = array(''); # 提权 非常正面
 
-$t = microtime(1);
-if (isset($_GET['s'])) {
-    $s = $_GET['s'];
-}
-else {
-    $s = null;
-}
-if (isset($_GET['n'])) {
-    $n = $_GET['n'];
-}
-else {
-    $n = null;
-}
-if (isset($_GET['d'])) {
-    $d = $_GET['d'];
-}
-else {
-    $d = null;
-}
-if (isset($_GET['o'])) {
-    $o = $_GET['o'];
-}
-else {
-    $o = null;
-}
-if (isset($_GET['x'])) {
-    $x = $_GET['x'];
-}
-else {
-    $x = null;
-}
-if (isset($_GET['f'])) {
-    $f = $_GET['f'];
-}
-else {
-    $f = null;
-}
+$z = null;
+isset($_GET['s']) == True ? $s = 1 && $z = $_GET['s'] : $s = null;
+isset($_GET['n']) == True ? $n = 1 && $z = $_GET['n'] : $n = null;
+isset($_GET['x']) == True ? $x = 1 && $z = $_GET['x'] : $x = null;
+isset($_GET['d']) == True ? $d = $_GET['d'] : $d = null;
+isset($_GET['o']) == True ? $o = $_GET['o'] : $o = null;
+isset($_GET['f']) == True ? $f = $_GET['f'] : $f = null;
 
 # 过滤字符串
-$p = array (' ', '#', '&', 'https://', 'http://', 'http:/');
-$y = array ('+', '%23', '%26', '', '', '');
-
-if (strlen($s) > 0) {
-    $spam_x = str_replace("\n", '', file($spam)); # 负面词典
-    $s_sx = 0;
-    foreach ($spam_x as $k_sx) {
-        if ($s == $k_sx) {
-            echo "负面词典已存在\n";
-            $s_sx = 1;
-            break;
-        }
-    }
-    if ($s_sx == 0) {
-        file_put_contents($spam, $s."\n", FILE_APPEND | LOCK_EX);
-        echo $s."\n已添加到负面词典\n";
-    }
-    $q = substr(htmlspecialchars(strtolower(str_replace($p, $y, $s))), 0, 128);
-}
-elseif (strlen($n) > 0) {
-    $norm_x = str_replace("\n", '', file($norm)); # 正面词典
-    $n_nx = 0;
-    foreach ($norm_x as $k_nx) {
-        if ($n == $k_nx) {
-            echo "正面词典已存在\n";
-            $n_nx = 1;
-            break;
-        }
-    }
-    if ($n_nx == 0) {
-        file_put_contents($norm, $n."\n", FILE_APPEND | LOCK_EX);
-        echo $n."\n已添加到正面词典\n";
-    }
-    $q = substr(htmlspecialchars(strtolower(str_replace($p, $y, $n))), 0, 128);
-}
-elseif (strlen($d) > 0) {
-    $dict_x = str_replace("\n", '', file($dict)); # 词典
-    $d_dx = 0;
-    foreach ($dict_x as $k_dx) {
-        if ($d == $k_dx) {
-            echo "词典已存在\n";
-            $d_dx = 1;
-            break;
-        }
-    }
-    if ($d_dx == 0) {
-        file_put_contents($dict, $d."\n", FILE_APPEND | LOCK_EX);
-        echo $d."\n已添加到词典\n";
-    }
-}
-elseif ($f == 1) {
-    $spam_d = str_replace("\n", '', file($spam)); # 负面词典
-    echo '负面词典里删除 '.end($spam_d)."\n";
-    array_pop($spam_d);
-    array_unique($spam_d);
-    unlink($spam);
-    foreach ($spam_d as $k_s_d) {
-        file_put_contents($spam, $k_s_d."\n", FILE_APPEND | LOCK_EX);
-    }
-}
-elseif ($f == 2) {
-    $norm_d = str_replace("\n", '', file($norm)); # 正面词典
-    echo '正面词典里删除 '.end($norm_d)."\n";
-    array_pop($norm_d);
-    array_unique($norm_d);
-    unlink($norm);
-    foreach ($norm_d as $k_n_d) {
-        file_put_contents($norm, $k_n_d."\n", FILE_APPEND | LOCK_EX);
-    }
-}
-elseif ($f == 3) {
-    $dict_d = str_replace("\n", '', file($dict)); # 词典
-    echo '词典里删除 '.end($dict_d)."\n";
-    array_pop($dict_d);
-    array_unique($dict_d);
-    unlink($dict);
-    foreach ($dict_d as $k_d_d) {
-        file_put_contents($dict, $k_d_d."\n", FILE_APPEND | LOCK_EX);
-    }
-}
-
-if (strlen($x) > 0) {
-    $q = substr(htmlspecialchars(strtolower(str_replace($p, $y, $x))), 0, 128);
-}
+$p = array(' ', '#', '&', 'https://', 'http://', 'http:/');
+$y = array('+', '%23', '%26', '', '', '');
+$be = 0;
 
 if ($o == 1) {
-    $spams = str_replace("\n", '', file($spam)); # 负面词典
-    $norms = str_replace("\n", '', file($norm)); # 正面词典
-    $dicts = str_replace("\n", '', file($dict)); # 词典
+    $spams = str_replace("\n", '', file($spam));
+    $norms = str_replace("\n", '', file($norm));
+    $dicts = str_replace("\n", '', file($dict));
     $isn = number_format(2 / (count(file($norm)) + count(file($spam))), 5);
     echo '平均词频 '.$isn;
-
     # 负面词典简易分词
     foreach ($spams as $j => $v) {
         $spm[$j] = htmlspecialchars(strtolower(str_replace($p, $y, $spams[$j])));
@@ -186,7 +68,7 @@ if ($o == 1) {
             $segf0[$j] = $segc0[$j];
             $seg0[$j] = array_values(array_unique($segf0[$j]));
         }
-        # 词典不存在的词而且没有 2 个连续的点或是一个加号，新数组等于负面文本
+        # 词典不存在而且没有 2 个连续的点或是一个加号，新数组等于负面文本
         else {
             $seg0[$j] = array($spm[$j]);
         }
@@ -243,7 +125,6 @@ if ($o == 1) {
     # 按数组所有值出现的次数精简
     $cnt = array_count_values($sff);
     $coun = array_count_values($nff);
-
     # 把负面词出现次数转换为比例
     foreach ($cnt as $k => $v) {
         $c[$k] = number_format($cnt[$k] / count($sf0), 5);
@@ -251,11 +132,10 @@ if ($o == 1) {
     # 负面词数组中的关键词与比例拆分为 2 个数组
     $c1 = array_keys($c);
     $c2 = array_values($c);
-    # 关键词和比例重组为新的二维数组
+    # 关键词和比例重组为二维新数组
     foreach ($c1 as $k => $v) {
         $cc[$k] = array((string)$c1[$k], $c2[$k]);
     }
-
     # 把正面词出现次数转换为比例
     foreach ($coun as $k => $v) {
         $d_1[$k] = number_format($coun[$k] / count($nf0), 5);
@@ -290,50 +170,93 @@ if ($o == 1) {
             }
         }
     }
-
-    if (isset($sp1w[0]) && $sp1w[0] != null) {
-        foreach ($sp1w as $k => $v) {
-            $sp1[$k] = array($sp1w[$k], number_format(0.5, 1), $isn);
+    $sp0 = array();
+    if (isset($priv0[0]) && $priv0[0] != null) {
+        foreach ($priv0 as $pv0) {
+            $sp0[] = array($pv0, number_format(0.5, 1), $isn);
         }
     }
-    else {
-        $sp1 = array();
-    }
-    if (isset($sp2w[0]) && $sp1w[0] != null) {
-        foreach ($sp2w as $k => $v) {
-            $sp2[$k] = array($sp2w[$k], number_format(0.05, 2), $isn);
+    $sp1 = array();
+    if (isset($priv1[0]) && $priv1[0] != null) {
+        foreach ($priv1 as $pv1) {
+            $sp1[] = array($pv1, $isn, number_format(0.5, 1));
         }
     }
-    else {
-        $sp2 = array();
-    }
-    if (isset($sp3w[0]) && $sp1w[0] != null) {
-        foreach ($sp3w as $k => $v) {
-            $sp3[$k] = array($sp3w[$k], $isn, number_format(0.5, 1));
-        }
-    }
-    else {
-        $sp3 = array();
-    }
-    if (isset($sp4w[0]) && $sp1w[0] != null) {
-        foreach ($sp4w as $k => $v) {
-            $sp4[$k] = array($sp4w[$k], $isn, number_format(0.05, 2));
-        }
-    }
-    else {
-        $sp4 = array();
-    }
-
     # 合并负面词的负面和正面概率与正面词的负面和正面概率和特殊提权的负面和正面概率
-    $new = array_merge($ccc, $dd, $sp1, $sp2, $sp3, $sp4);
-
+    $new = array_merge($ccc, $dd, $sp0, $sp1);
     # 写入文件
     file_put_contents($freq, serialize($new), LOCK_EX);
-
     echo "\n生成新贝叶斯词频库\n";
-    echo '计算耗时 '.number_format((microtime(1) - $t), 6)." 秒\n";
 }
-if (strlen($s) > 0 || strlen($n) > 0 || strlen($x) > 0) {
+elseif ($s != null) {
+    $spam_x = str_replace("\n", '', file($spam));
+    foreach ($spam_x as $k_sx) {
+        if ($z == $k_sx) {
+            echo "负面词典已存在\n";
+            $be = 1;
+            break;
+        }
+    }
+    if ($be == 0) {
+        echo $z."\n已添加到负面词典\n";
+        file_put_contents($spam, $z."\n", FILE_APPEND | LOCK_EX);
+    }
+}
+elseif ($n != null) {
+    $norm_x = str_replace("\n", '', file($norm));
+    foreach ($norm_x as $k_nx) {
+        if ($z == $k_nx) {
+            echo "正面词典已存在\n";
+            $be = 1;
+            break;
+        }
+    }
+    if ($be == 0) {
+        echo $z."\n已添加到正面词典\n";
+        file_put_contents($norm, $z."\n", FILE_APPEND | LOCK_EX);
+    }
+}
+elseif ($d != null) {
+    $dict_x = str_replace("\n", '', file($dict));
+    foreach ($dict_x as $k_dx) {
+        if ($d == $k_dx) {
+            echo "词典已存在\n";
+            $be = 1;
+            break;
+        }
+    }
+    if ($be == 0) {
+        echo $d."\n已添加到词典\n";
+        file_put_contents($dict, $d."\n", FILE_APPEND | LOCK_EX);
+    }
+}
+elseif ($f == 's') {
+    $spam_d = str_replace("\n", '', file($spam));
+    echo '负面词典里删除 '.end($spam_d)."\n";
+    unlink($spam);
+    for ($i = 0; $i + 1 < count($spam_d); $i++) {
+        file_put_contents($spam, $spam_d[$i]."\n", FILE_APPEND | LOCK_EX);
+    }
+}
+elseif ($f == 'n') {
+    $norm_d = str_replace("\n", '', file($norm));
+    echo '正面词典里删除 '.end($norm_d)."\n";
+    unlink($norm);
+    for ($i = 0; $i + 1 < count($norm_d); $i++) {
+        file_put_contents($norm, $norm_d[$i]."\n", FILE_APPEND | LOCK_EX);
+    }
+}
+# 删除速度取决于词典大小
+elseif ($f == 'd') {
+    $dict_d = str_replace("\n", '', file($dict));
+    echo '词典里删除 '.end($dict_d)."\n";
+    unlink($dict);
+    for ($i = 0; $i + 1 < count($dict_d); $i++) {
+        file_put_contents($dict, $dict_d[$i]."\n", FILE_APPEND | LOCK_EX);
+    }
+}
+if ($z != null) {
+    $q = substr(htmlspecialchars(strtolower(str_replace($p, $y, $z))), 0, 128);
     $lib = unserialize(file_get_contents($freq));
     $bys1 = array_filter(preg_split('/\.{2,}|\+/', $q));
     foreach ($lib as $k1 => $v) {
@@ -397,16 +320,16 @@ if (strlen($s) > 0 || strlen($n) > 0 || strlen($x) > 0) {
         }
     }
     else {
-        echo $q."\n没有计算词频\n";
+        echo $q."\n没有收录在词频数组\n";
     }
 }
-if ($s == null && $n == null && $d == null && $o == null && $x == null && $f == null) {
-    echo "s 添加负面词
+if ($z == null && $d == null && $o == null && $f == null) {
+    echo "x 查询词负面概率
+s 添加负面词
 n 添加正面词
 d 添加词汇
 o 1 生成贝叶斯词库
-x 计算查询词负面概率
-f 1 删除负面词
-f 2 删除正面词
-f 3 删除词汇\n";
+f s 删除负面词
+f n 删除正面词
+f d 删除词汇\n";
 }
