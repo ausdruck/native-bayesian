@@ -1,8 +1,8 @@
 <?php
 /**
   * @author maas(maasdruck@gmail.com)
-  * @date 2019/03/26
-  * @version v1.03
+  * @date 2019/03/28
+  * @version v1.04
   * @brief 朴素贝叶斯自动过滤擦边词
   */
 
@@ -18,7 +18,6 @@ $dict = $dir.'d607330.txt'; # 词典
 $spam = $dir.'spam.txt';    # 负面词典
 $norm = $dir.'normal.txt';  # 正面词典
 $freq = $dir.'bayesian';    # 词频序列数组
-
 
 $priv0 = array(''); # 提权 严重负面
 $priv1 = array(''); # 提权 非常正面
@@ -39,18 +38,18 @@ $be = 0;
 if ($o == 1) {
     $spams = str_replace("\n", '', file($spam));
     $norms = str_replace("\n", '', file($norm));
-    $dicts = str_replace("\n", '', file($dict));
     $isn = number_format(2 / (count(file($norm)) + count(file($spam))), 5);
     echo '平均词频 '.$isn;
+    $dicts = str_replace("\n", '', file($dict));
     # 负面词典简易分词
     foreach ($spams as $j => $v) {
         $spm[$j] = htmlspecialchars(strtolower(str_replace($p, $y, $spams[$j])));
         # query 中有 2 个连续的点或是一个加号就拆分
         $segs[$j] = array_filter(preg_split('/\.{2,}|\+/', strtolower($spm[$j])));
         # 负面词典匹配词典每一个词，匹配则生成数组，耗时取决于负面词总数
-        foreach ($dicts as $k => $v) {
-            if (strpos($spm[$j], $dicts[$k]) > -1) {
-                $segc0[$j][$k] = $dicts[$k];
+        foreach ($dicts as $di) {
+            if (strpos($spm[$j], $di) > -1) {
+                $segc0[$j][] = $di;
             }
         }
         # 如果存在 query 有 2 个连续的点或是一个加号，与词典分词的数组合并成新数组，然后去重
@@ -78,12 +77,12 @@ if ($o == 1) {
     # 正面词典简易分词
     foreach ($norms as $j => $v) {
         $nom[$j] = htmlspecialchars(strtolower(str_replace($p, $y, $norms[$j])));
-        $segn[$j] =  array_filter(preg_split('/\.{2,}|\+/', strtolower($nom[$j])));
-        foreach ($dicts as $k => $v) {
-            if (strpos($nom[$j], $dicts[$k]) > -1) {
-                $segc1[$j][$k] = $dicts[$k];
+        foreach ($dicts as $di) {
+            if (strpos($nom[$j], $di) > -1) {
+                $segc1[$j][] = $di;
             }
         }
+        $segn[$j] = array_filter(preg_split('/\.{2,}|\+/', strtolower($nom[$j])));
         if (isset($segn[$j][1])) {
             if (isset($segc1[$j])) {
                 $segf1[$j] = array_merge($segc1[$j], $segn[$j]);
@@ -102,13 +101,14 @@ if ($o == 1) {
         }
         $nf0[$j] = array($seg1[$j]);
     }
+    unset($dicts);
     # 负面词三维数组转为一维数组
-    $u = 0;
+    $w = 0;
     foreach ($sf0 as $j => $v) {
         foreach ($sf0[$j] as $k => $v) {
-            foreach ($sf0[$j][$k] as $i => $v) {
-                $sff[$u + 0] = $sf0[$j][$k][$i];
-                $u += 1;
+            foreach ($sf0[$j][$k] as $sfl) {
+                $sff[$w + 0] = $sfl;
+                $w += 1;
             }
         }
     }
@@ -116,8 +116,8 @@ if ($o == 1) {
     $w = 0;
     foreach ($nf0 as $j => $v) {
         foreach ($nf0[$j] as $k => $v) {
-            foreach ($nf0[$j][$k] as $i => $v) {
-                $nff[$w + 0] = $nf0[$j][$k][$i];
+            foreach ($nf0[$j][$k] as $nfl) {
+                $nff[$w + 0] = $nfl;
                 $w += 1;
             }
         }
@@ -182,11 +182,9 @@ if ($o == 1) {
             $sp1[] = array($pv1, $isn, number_format(0.5, 1));
         }
     }
-    # 合并负面词的负面和正面概率与正面词的负面和正面概率和特殊提权的负面和正面概率
-    $new = array_merge($ccc, $dd, $sp0, $sp1);
-    # 写入文件
-    file_put_contents($freq, serialize($new), LOCK_EX);
+    # 合并负面词的负面和正面概率与正面词的负面和正面概率和特殊提权的负面和正面概率然后写入文件
     echo "\n生成新贝叶斯词频库\n";
+    file_put_contents($freq, serialize(array_merge($ccc, $dd, $sp0, $sp1)), LOCK_EX);
 }
 elseif ($s != null) {
     $spam_x = str_replace("\n", '', file($spam));
@@ -307,7 +305,7 @@ if ($z != null) {
             foreach ($seg1 as $k6 => $v) {
                 if ($seg[$k5] == $seg1[$k6][0]) {
                     $spp[$k5] = $seg1[$k6][1] / ($seg1[$k6][1] + $seg1[$k6][2]);
-                    $spo[$k5] = 1- $seg1[$k6][1] / ($seg1[$k6][1] + $seg1[$k6][2]);
+                    $spo[$k5] = 1 - $spp[$k5];
                 }
             }
         }
@@ -315,7 +313,7 @@ if ($z != null) {
     if (isset($spp)) {
         $spp1 = array_values($spp);
         if (isset($spp1[0])) {
-            $semantic = number_format(((array_product($spp) / (array_product($spp) + array_product($spo))) * 100), 2);
+            $semantic = number_format(((array_product($spp) / (array_product($spp) + array_product($spo))) * 100), 1);
             echo $semantic."% 概率是负面词\n";
         }
     }
