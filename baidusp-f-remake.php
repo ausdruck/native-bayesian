@@ -6,12 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black" />
 <meta name="format-detection" content="telephone=no" />
-
 <title>百度搜索结果F系列参数</title>
 <meta content="百度搜索结果参数,F,F1,F2,F3" name="keywords" />
 <meta content="判断百度搜索结果 F 系列参数。" name="description" />
 <link rel="author" href="https://plus.google.com/109624994087248289296/posts" />
-<link rel="canonical" href="http://www.weixingon.com/baidusp-f.php" />
 <style type="text/css">
 body,div,h1{
 margin:0;
@@ -97,32 +95,44 @@ background-color:#ccddff;
 text-align:center;
 }
 </style>
-
 </head>
-
 <body>
 <div class="detail">
-
-<div class="header">
+<?php
+/*
+ * 百度f参数工具复刻版
+ * 1.01 2019年12月30日
+ * 1.00 2014年03月12日
+ * 不忘初心，开发这工具原本是用来研究分析百度 f 参数，应该让其返回本来意图
+ */
+if (isset($_POST['query'])) {
+    $query = $_POST['query'];
+}
+else {
+    $query = null;
+}
+echo '<div class="header">
     <form method="post" action="baidusp-f-remake.php">
-        <input class="text" type="text" value="<?php echo htmlspecialchars($_POST['query'],ENT_QUOTES);?>" name="query" title="解释" autocomplete="off" maxlength="76" baiduSug="1" autofocus="autofocus" />
+        <input class="text" type="text" value="';
+echo htmlspecialchars($query, ENT_QUOTES);
+echo '" name="query" title="解释" autocomplete="off" maxlength="76" baiduSug="1" autofocus="autofocus" />
         <input class="submit" type="submit" value="查询 F 参数" />
     </form>
-</div>
-<?php
-$query = $_POST['query'];
+</div>';
+if ($query != null) {
+$ip = array(
+'www.baidu.com',
+);
+shuffle($ip);
 $queryfilter = htmlspecialchars(preg_replace("/(\s+)/","%20",$query));
-
-$baidu = "http://www.baidu.com/s?wd=";
+$baidu = "http://".$ip[0]."/s?wd=";
 $baiduserp = file_get_contents($baidu.$queryfilter);
-
 if
 (!is_null($query))
 echo "
 <h1 class=\"bold\">
     <a href=\"$baidu$queryfilter&amp;ie=utf-8\" target=\"_blank\" rel=\"external nofollow\">查看“<span class=\"red\">$queryfilter</span>”的百度搜索结果</a>
 </h1>
-
 <table>
     <thead>
         <tr>
@@ -140,7 +150,6 @@ echo "
         </tr>
     </thead>
     <tbody class=\"center\">";
-
 if
 (preg_match_all("/(	'F':')([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})(?=',)/", $baiduserp, $match))
 {
@@ -192,13 +201,11 @@ if
         </tr>";
     }
 }
-
 if
 (!is_null($query))
 echo"
     </tbody>
 </table>
-
 <table>
     <thead>
         <tr>
@@ -216,7 +223,6 @@ echo"
         </tr>
     </thead>
     <tbody class=\"center\">";
-
 if
 (preg_match_all("/(	'F1':')([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})(?=',)/", $baiduserp, $match))
 {
@@ -300,13 +306,11 @@ if
         </tr>";
     }
 }
-
 if
 (!is_null($query))
 echo"
     </tbody>
 </table>
-
 <table>
     <thead>
         <tr>
@@ -324,7 +328,6 @@ echo"
         </tr>
     </thead>
     <tbody class=\"center\">";
-
 if
 (preg_match_all("/(	'F2':')([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})(?=',)/", $baiduserp, $match))
 {
@@ -391,13 +394,11 @@ if
         </tr>";
     }
 }
-
 if
 (!is_null($query))
 echo"
     </tbody>
 </table>
-
 <table>
     <thead>
         <tr>
@@ -415,7 +416,6 @@ echo"
         </tr>
     </thead>
     <tbody class=\"center\">";
-
 if
 (preg_match_all("/(	'F3':')([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})(?=',)/", $baiduserp, $match))
 {
@@ -538,13 +538,11 @@ if
         </tr>";
     }
 }
-
 if
 (!is_null($query))
 echo"
     </tbody>
 </table>
-
 <table>
     <thead>
         <tr>
@@ -562,7 +560,6 @@ echo"
         </tr>
     </thead>
     <tbody class=\"center\">";
-
 if
 (preg_match_all("/(	'y':')([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})([0-9A-F]{1})(?=')/", $baiduserp, $match))
 {
@@ -592,49 +589,14 @@ if
         </tr>";
     }
 }
-
 if
 (!is_null($query))
 echo"
     </tbody>
 </table>";
-
-date_default_timezone_set('PRC');
-$time = date('Y-m-d H:i:s');
 clearstatcache();
+}
 ?>
-
-<p>
-    <div class="bdlikebutton"></div>
-</p>
-
-<div class="ds-thread"></div>
-
-</div>
-
 <script charset="gbk" src="http://www.baidu.com/js/opensug.js"></script>
-
-<script id="bdlike_shell"></script>
-
-<script>
-var bdShare_config = {
-"type":"small",
-"color":"blue",
-"uid":"6452695"
-};
-document.getElementById("bdlike_shell").src="http://bdimg.share.baidu.com/static/js/like_shell.js?t=" + Math.ceil(new Date()/3600000);
-</script>
-
-<script type="text/javascript">
-var duoshuoQuery = {short_name:"weixingon"};
-(function() {
-var ds = document.createElement('script');
-ds.type = 'text/javascript';ds.async = true;
-ds.src = 'http://static.duoshuo.com/embed.js';
-(document.getElementsByTagName('head')[0] 
-|| document.getElementsByTagName('body')[0]).appendChild(ds);
-})();
-</script>
-
 </body>
 </html>
